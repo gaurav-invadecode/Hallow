@@ -1,0 +1,1 @@
+src/components/pages/files-page.tsx

@@ -1,0 +1,19 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "messages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "chatId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    { "collectionGroup": "chatMembers", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "chatId", "order": "ASCENDING" }
+    ]},
+    { "collectionGroup": "teamMembers", "queryScope": "COLLECTION", "fields": [
+      { "fieldPath": "teamId", "order": "ASCENDING" }
+    ]}
+  ],
+  "fieldOverrides": []
+}

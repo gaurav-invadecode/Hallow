@@ -1,0 +1,61 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isUser(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    // login-users collection is readable by any authenticated user for user lists/search
+    // but only writable by the user themselves
+    match /login-users/{uid} {
+        allow read: if isSignedIn();
+        allow write: if isUser(uid);
+    }
+
+    function isChatMember(chatId) {
+      return exists(/databases/$(database)/documents/chatMembers/$(chatId)_$(request.auth.uid));
+    }
+    
+    match /chats/{chatId} {
+      allow read: if isChatMember(chatId);
+      // for now, let any member update chat metadata (name, pinning, etc)
+      // will refine this to admins later
+      allow update: if isChatMember(chatId); 
+    }
+
+    match /chats/{chatId}/messages/{messageId} {
+        allow read, create: if isChatMember(chatId);
+        allow update: if 
+          isChatMember(chatId) &&
+          (
+            // Allow user to edit their own message content
+            (request.resource.data.content != resource.data.content && request.auth.uid == resource.data.senderId) ||
+            // Allow any member to add/remove reactions
+            (request.resource.data.reactions != resource.data.reactions) ||
+            // Allow any member to mark/unmark as important
+            (request.resource.data.isImportant != resource.data.isImportant) ||
+            // Allow user to add themselves to readBy
+            (request.resource.data.readBy.size() >= resource.data.readBy.size() && request.resource.data.readBy.hasOnly([request.auth.uid])) ||
+            // Allow user (or admin in group chat) to delete a message
+            (request.resource.data.isDeleted == true && resource.data.isDeleted == false)
+          );
+    }
+
+    match /chatMembers/{membershipId} {
+        allow read, create: if isSignedIn();
+        // for now, no one can update/delete memberships directly. this is handled
+        // by updating the participants array on the chat document itself via a function.
+        allow update, delete: if false; 
+    }
+
+    match /files/{fileId} {
+        allow read, create: if isSignedIn() && request.auth.uid == request.resource.data.ownerId;
+        allow read: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/files/$(fileId)).data.shared;
+    }
+  }
+}

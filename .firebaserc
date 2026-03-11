@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "leadwise-ozj67"
+  },
+  "targets": {
+    "leadwise-ozj67": {
+      "hosting": {
+        "hallow-9964": [
+          "hallow-9964"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
